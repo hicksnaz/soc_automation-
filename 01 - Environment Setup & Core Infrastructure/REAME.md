@@ -20,8 +20,6 @@ Because application interfaces and installation steps change over time, I create
 
 ## Part 1: Installing and Verifying VirtualBox
 
-To run my target endpoint (Windows 11) locally, I need a virtualization tool. While the absolute newest version of VirtualBox (7.2) is available, I found that version 7.1 (specifically version 7.1.12) is much more stable for my setup.
-
 ### Steps I Took:
 1. I went to the official VirtualBox website and downloaded VirtualBox 7.2.6 for Windows hosts.
 2. To ensure the downloaded installer file was safe and not corrupted during download, I verified its SHA-256 checksum.
