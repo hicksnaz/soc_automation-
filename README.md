@@ -1,4 +1,4 @@
-# SOC Automation Lab
+# SOC Automation Project
 
 ## Overview
 Welcome to the central repository for my SOC Automation Project!
