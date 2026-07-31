@@ -27,7 +27,7 @@ To run my target endpoint (Windows 11) locally, I need a virtualization tool. Wh
 2. To ensure the downloaded installer file was safe and not corrupted during download, I verified its SHA-256 checksum.
 3. I opened PowerShell in my `Downloads` folder and ran the following hash check command:
    ```powershell
-   Get-FileHash .\VirtualBox-7.1...exe
+   Get-FileHash .\VirtualBox-7.2...exe
 
 <img src="https://i.imgur.com/hawMaih.png"/>
 
@@ -75,7 +75,7 @@ Once the initial Windows setup wizard finished copying operating system files, I
 
 ### Steps I Took:
 
-1. **Region & Keyboard Settings:** Selected my region and keyboard layout preferences, then assigned the computer name `mydfir-pc`.
+1. **Region & Keyboard Settings:** Selected my region and keyboard layout preferences, then assigned the computer name `realchill-pc`. (whatever name you choose)
 2. **Setup Preference:** When asked how I wanted to set up the device, I selected **Set up for personal use**.
 3. **Account Sign-In:** Signed in with Microsoft account credentials to satisfy the initial online setup requirement (noting that local account workarounds can also be used if preferred).
 4. **Privacy & Telemetry Settings:** Disabled extra Microsoft diagnostic data and telemetry options (like location tracking and tailored ads) to keep background network traffic as clean as possible.
