@@ -8,17 +8,17 @@ When I set out to build this lab, my goal wasn't just to install security tools 
 In a traditional security team, analysts often spend hours copying file hashes, pasting them into threat check websites, writing up incident tickets, and sending manual emails. I wanted to eliminate that friction by building an automated pipeline where an attack on an endpoint is detected, analyzed, enriched with threat intelligence, ticketed, and alerted on in under 5 seconds.
 
 ## Objectives 
-   - Watch Everything: Set up detailed activity logging on a Windows computer using Sysmon so no sneaky behavior goes unseen.
+   - Move beyond basic Windows logs by collecting rich, host-level activity reports using Sysmon (System Monitor).
 
-   - Collect It All in One Place: Send all computer logs to a central security brain (Wazuh SIEM).
+   - Ingest and archive raw security events into Wazuh SIEM to create a single source of truth for analysis.
 
-   - Write Custom Alarm Rules: Create custom detection rules to catch specific attack tools like Mimikats (a tool bad guys use to steal passwords).
+   - Create custom detection rules to catch specific attack tools like Mimikats (a tool attackers use to steal passwords).
 
-   - Automate the Boredom: Use Shuffle SOAR to connect all my tools together like Lego bricks.
+   - Use Shuffle SOAR to orchestrate workflows that extract threat indicators automatically.
 
-   - Check Threats Automatically: Automatically ask VirusTotal if a suspicious file is actually dangerous.
+   - Automatically query VirusTotal via API to check if an extracted file fingerprint (SHA256 hash) is dangerous.
 
-   - Alert the Team Instantly: Automatically create an incident ticket in The Hive and drop an email straight into my inbox.
+   - Instantly create incident tickets inside The Hive and alert on-call analysts via Email without any manual effort.
 
 ## Lab Breakdown
 ### Lab 01: Environment Setup & Core Infrastructure
