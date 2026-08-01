@@ -188,3 +188,37 @@ To optimize the management of the Windows 11 virtual machine, VirtualBox Guest A
 
 3. **Complete the Installation Wizard**  
    Proceed through the installation wizard prompts, approve the necessary kernel driver installations, and restart the virtual machine when prompted to finalize changes.
+   <img src="https://i.imgur.com/s482HVh.png"/>
+
+   ## Part 7: Deploying and Connecting the Wazuh Windows Agent
+
+With the Wazuh SIEM server deployed and fully operational, the Wazuh agent must be installed on the Windows 11 target machine. This configuration enables the endpoint to securely stream Windows Event logs and Sysmon telemetry back to the central SIEM.
+
+### Configuration Steps
+
+1. **Access the Agent Deployment Wizard**  
+   Log into the Wazuh Web UI via the web browser inside your Windows 11 virtual machine. From the main dashboard home page, select **Deploy new agent**.
+
+2. **Generate the Deployment Script**  
+   Configure the agent settings with the following parameters:
+   * **Operating System:** Windows
+   * **Wazuh Server IP:** Input your Wazuh server's public IP address.
+   * **Agent Name:** `realchill-windows` (choose whatever)
+<img src="https://i.imgur.com/BRRx69x.png"/>
+<img src="https://i.imgur.com/1FWm6ly.png"/>
+
+3. **Install and Initialize the Agent**  
+   Open **PowerShell as Administrator** inside the Windows 11 VM, paste the auto-generated deployment command block to download the installer, and then start the endpoint service:
+   ```powershell
+   net start wazuhsvc
+   ```
+<img src="https://i.imgur.com/JTgvqRQ.png"/>
+
+4. **Configure Network Firewalls for Agent Traffic**  
+   By default, cloud firewalls restrict agent telemetry streams. Connect to your Wazuh server via SSH and execute the following commands to allow inbound communication on the required ports using the Uncomplicated Firewall (UFW):
+   ```bash
+   sudo ufw allow 1514
+   sudo ufw allow 1515
+   ```
+<img src="https://i.imgur.com/Mfjhl3c.png"/>
+<img src="https://i.imgur.com/0W5D88V.png"/>
