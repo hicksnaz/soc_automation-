@@ -47,20 +47,20 @@ Before making changes, I made a safety backup copy of the agent configuration fi
   <log_format>eventchannel</log_format>
 </localfile>
 ```
-<img src="https://i.imgur.com/hEskC14.png"/>
-<img src="https://i.imgur.com/J6NU61B.png"/>
+<img src="https://i.imgur.com/dUkhb53.png"/>
+<img src="https://i.imgur.com/IzMPcyu.png"/>
 
 ### 4. Restarting the Wazuh Agent Service
 To apply the new log ingestion settings:
 1. I opened Windows Services (`services.msc`).
 2. Found **Wazuh**, right-clicked, and selected **Restart**.
-<img src="https://i.imgur.com/OEfnRRI.png"/>
+<img src="https://i.imgur.com/Iw5wTj9.png"/>
 
 ### 5. Verifying Telemetry Ingestion in Wazuh
 1. I opened my **Wazuh SIEM web dashboard**.
 2. Went to **Discover** and searched for *Sysmon*.
 3. I expanded incoming events to verify that `Microsoft-Windows-Sysmon` logs were actively flowing into the SIEM.
-<img src="https://i.imgur.com/fRlfXSW.png"/>
+<img src="https://i.imgur.com/ZHVj0m2.png"/>
 
 # Part 2: Preparing the Target Environment & Downloading Mimikats
 
@@ -83,12 +83,12 @@ To stop Defender from automatically deleting my test tool after downloading:
 ### 3. Downloading Mimikats
 1. I opened **Microsoft Edge** and navigated to the official GentleKiwi Mimikats GitHub repository. (Link if you can't find it: `https://github.com/gentilkiwi/mimikatz/security`)
 2. I downloaded the compiled binary package (`mimikats_trunk.zip`).
-<img src="https://i.imgur.com/eSgPPyj.png"/>
+<img src="https://i.imgur.com/4bLC2bW.png"/>
    
 3. When Edge warned that the download was unsafe, I selected **Keep** > **Keep anyway**.
 4. I extracted the ZIP folder contents to my downloads directory.
-<img src="https://i.imgur.com/RkL41kp.png"/>
-<img src="https://i.imgur.com/DWkKwdA.png"/>
+<img src="https://i.imgur.com/smxEpr5.png"/>
+<img src="https://i.imgur.com/UylLdkk.png"/>
 
 # Part 3: Enabling Full Log Archiving on the Wazuh Manager
 
@@ -142,3 +142,103 @@ To allow Filebeat (the data shipper) to send archived logs to the dashboard inde
    ```bash
    sudo systemctl restart filebeat
    ```
+ <img src="https://i.imgur.com/Bf9Jzr7.png"/>
+ <img src="https://i.imgur.com/ERm6twf.png"/>
+
+ # Part 4: Creating the Archives Index Pattern in Wazuh Dashboard
+
+Now that raw events were being archived on the server, I needed to configure the Wazuh web dashboard so I could search through these raw logs in real-time.
+
+---
+
+## Steps I Took
+
+### 1. Creating the Index Pattern in Dashboard Management
+1. On the **Wazuh Web UI**, I clicked the main menu icon (hamburger menu) and selected **Dashboard Management**.
+2. I clicked **Index Patterns** on the left side menu and clicked **Create index pattern** at the top right.
+3. I entered the pattern name: `wazuh-archives-*`.
+4. I clicked **Next step**, selected `timestamp` as the Primary Time Field, and clicked **Create index pattern**.
+<img src="https://i.imgur.com/I8mKNr0.png"/>
+
+
+### 2. Searching for Raw Events in Discover
+1. I navigated back to **Discover** from the main menu.
+2. In the index pattern dropdown selector at the top left, I switched from `wazuh-alerts-*` to my newly created `wazuh-archives-*`.
+3. Now I can search through every single event sent by my Windows 11 VM—even events that haven't triggered an official alert yet!
+<img src="https://i.imgur.com/NfNdKcI.png"/>
+
+# Part 5: Writing a Custom Wazuh XML Detection Rule
+
+With raw logs visible in `wazuh-archives-*`, I tested running `mimikats.exe` on my VM. The raw process creation event appeared in my archives, but no security alert was triggered because Wazuh did not have a default rule matching this specific file execution.
+
+I decided to write my own custom detection rule to catch Mimikats.
+
+> 💡 **Simple Explanation:**
+> Attackers often rename malicious tools (for example, renaming `mimikats.exe` to `notepad.exe`) to trick security tools. However, the inner file metadata (`OriginalFileName`) stays `mimikats.exe`. My rule looks inside every process creation event and alerts if `originalFileName` equals `mimikats.exe`.
+
+---
+
+## Steps I Took
+
+### 1. Navigating to Custom Rules in Wazuh
+1. In the **Wazuh Dashboard**, I went to **Server Management** > **Rules**.
+2. I selected **Custom rules** and clicked **Edit local_rules.xml**.
+
+### 2. Authoring the Custom XML Detection Rule
+Inside `local_rules.xml`, I added the following custom rule definition:
+
+```xml
+<group name="sysmon,">
+  <rule id="100002" level="15">
+    <if_sid>92200</if_sid>
+    <field name="win.eventdata.originalFileName" plugin="json">^mimikats\.exe\$</field>
+    <description>Mimikats usage detected on \$(win.system.computer)</description>
+    <mitre>
+      <id>T1003</id>
+    </mitre>
+  </rule>
+</group>
+```
+<img src="https://i.imgur.com/aVC93Dm.png"/>
+
+### 3. Rule Breakdown
+* **`id="100002"`**: Custom rule IDs in Wazuh must be between `100000` and `120000`.
+* **`level="15"`**: High severity rating (triggers prominent alerts).
+* **`if_sid="92200"`**: Only checks events that are already recognized as Sysmon Event ID 1 (Process Creation).
+* **`win.eventdata.originalFileName`**: Matches the embedded original executable file name (`mimikats.exe`), ignoring what the attacker renamed the file to.
+* **`<mitre>`**: Maps the alert directly to MITRE ATT&CK Technique **T1003 (OS Credential Dumping)**.
+
+### 4. Saving and Restarting the Manager
+1. I clicked **Save** in the top right corner.
+2. I restarted the Wazuh Manager service to apply the new detection rule.
+
+# Part 6: Executing Mimikats & Verifying Alert Generation
+
+With the custom rule active, it was time to test my detection pipeline end-to-end.
+
+---
+
+## Steps I Took
+
+### 1. Executing Mimikats on the Target Machine
+1. On my Windows 11 VM, I opened a **PowerShell** terminal in the extracted Mimikats folder.
+2. I ran the executable:
+   ```powershell
+   .\mimikats.exe
+   ```
+<img src="https://i.imgur.com/GJzEOhN.png"/>
+
+### 2. Verifying the Fired Security Alert in Wazuh
+1. I opened the **Wazuh Web UI** and went to **Discover**.
+2. I set the index selector back to `wazuh-alerts-*`.
+3. I searched for `mimikats`.
+4. **Success!** A Level 15 security alert appeared immediately with the description:  
+   *`Mimikats usage detected on realchill-pc.`*
+<img src="https://i.imgur.com/Y4FyRGG.png"/>
+
+### 3. Inspecting the Alert Details
+Expanding the alert verified that it successfully mapped all intended telemetry metadata:
+* **Rule ID:** `100002`
+* **Severity Level:** `15`
+* **MITRE ATT&CK ID:** `T1003`
+* **Event Context:** Contained complete event details including the process path, user account, timestamp, and command line arguments.
